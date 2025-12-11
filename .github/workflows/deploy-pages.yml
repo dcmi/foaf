@@ -49,8 +49,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository (which now includes generated index.html)
-          path: '.'
+          # Upload only the _site directory (generated content)
+          path: '_site'
 
   deploy:
     environment:

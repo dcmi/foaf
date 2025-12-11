@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """
-FOAF Project - Index Page Generator
+FOAF Project - Site Generator
 
-This script generates the index.html for the FOAF project GitHub Pages site.
+This script generates the GitHub Pages site into the _site/ directory.
 It runs as part of the GitHub Actions workflow on each push to main/master.
+
+IMPORTANT: This script only writes to _site/ to avoid overwriting any
+existing files in the repository.
 """
 
 import os
+import shutil
 from datetime import datetime, timezone
+
+# Output directory - isolated from repo source files
+SITE_DIR = "_site"
+
 
 def generate_index_html():
     """Generate the main index.html page for the FOAF project."""
@@ -123,28 +131,20 @@ def generate_index_html():
     </div>
 
     <div class="foaf-image">
-        <img alt="FOAF - connecting people" src="foafproject/htdocs/images/foaflets.jpg" />
+        <img alt="FOAF - connecting people" src="images/foaflets.jpg" />
     </div>
 
     <div class="quick-links">
         <h2>Quick Start</h2>
         <div class="link-section">
             <a href="http://xmlns.com/foaf/0.1/">FOAF Vocabulary Spec</a> |
-            <a href="foafproject/htdocs/index.html">Original FOAF Site</a> |
             <a href="https://github.com/danbri/foaf">GitHub Repository</a>
         </div>
 
         <h2>Historical Resources</h2>
         <div class="link-section">
-            <strong>Sites:</strong>
-            <a href="rdfweb.org/htdocs/index.html">RDFWeb</a> |
-            <a href="foafnaut.org/index.html">FOAFnaut</a> |
-            <a href="xmlns.com/index.html">xmlns.com</a>
-        </div>
-
-        <div class="link-section">
-            <strong>Tools:</strong>
-            <a href="foafproject/htdocs/foaf-a-matic/index.html">FOAF-a-matic</a>
+            <a href="https://github.com/danbri/foaf/tree/master/foafproject">FOAF Project Files</a> |
+            <a href="https://github.com/danbri/foaf/tree/master/rdfweb.org">RDFWeb Archive</a>
         </div>
     </div>
 
@@ -167,21 +167,33 @@ def generate_index_html():
 def main():
     """Main entry point for the script."""
 
-    # Determine output directory (root of repo for GitHub Pages)
+    # Determine paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     repo_root = os.path.dirname(script_dir)
-    output_path = os.path.join(repo_root, "index.html")
+    site_dir = os.path.join(repo_root, SITE_DIR)
 
-    print(f"Generating index.html...")
-    print(f"Output path: {output_path}")
+    print(f"Building site into: {site_dir}")
 
+    # Clean and create _site directory
+    if os.path.exists(site_dir):
+        shutil.rmtree(site_dir)
+    os.makedirs(site_dir)
+
+    # Generate index.html
+    index_path = os.path.join(site_dir, "index.html")
     html_content = generate_index_html()
-
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(index_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
+    print(f"Generated: index.html ({len(html_content)} bytes)")
 
-    print(f"Successfully generated index.html")
-    print(f"File size: {len(html_content)} bytes")
+    # Copy images directory
+    src_images = os.path.join(repo_root, "foafproject", "htdocs", "images")
+    dst_images = os.path.join(site_dir, "images")
+    if os.path.exists(src_images):
+        shutil.copytree(src_images, dst_images)
+        print(f"Copied: images/")
+
+    print(f"Site build complete!")
 
 
 if __name__ == "__main__":
